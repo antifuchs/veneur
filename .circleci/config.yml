@@ -160,6 +160,8 @@ jobs:
     docker:
       - image: golang:latest
     working_directory: /go/src/github.com/stripe/veneur
+    environment:
+      GO111MODULE: "auto"
     steps:
       - fetch_and_build_latest_go
       - checkout
