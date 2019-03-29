@@ -77,6 +77,25 @@ commands:
             - /go/bin/protoc-gen-gogofaster
             - /go/bin/dep
             - /go/bin/stringer
+  fetch_and_build_latest_go:
+    description: "Builds the latest version of go from source"
+    steps:
+      - run: apt-get update -qy
+      - run: apt-get install -qy --no-install-recommends g++ gcc libc6-dev make
+      - run:
+          name: get latest master
+          command: |
+            mv /usr/local/go /usr/local/go-stable
+            wget -O/tmp/go-master.tgz https://github.com/golang/go/archive/master.tar.gz
+            tar -C /tmp xzvf /tmp/go-master.tgz
+            mv /tmp/go-master /usr/local/go
+            export GOSRC=/usr/local/go
+            export GOROOT=$GOSRC
+            export GOROOT_BOOTSTRAP=/usr/local/go-stable
+            export GOBUILD=$GOSRC/src
+            echo go-master-$(date +%Y-%M-%d) > $GOROOT/VERSION
+            cd $GOBUILD
+            ./make.bash
   test:
     description: "Run the tests"
     steps:
@@ -91,23 +110,33 @@ jobs:
     steps:
       - run: echo yay
 
-  gofmt:
+  code_hygiene:
     executor:
       name: gofmt
     working_directory: /go/src/github.com/stripe/veneur
     steps:
+      - install
       - checkout
+      - run: go generate
+      - run: "dep check"
       - run:
           name: "gofmt"
           command: |
-            gofmt -d .
+            mv vendor /tmp/veneur-vendor
+            gofmt -w .
+            mv /tmp/veneur-vendor ./
+      - run:
+          name: "check if any files changed"
+          command: |
+            git add .
+            git diff --cached
+            git diff-index --cached --exit-code HEAD
 
   test_stable:
     executor:
       name: stable
     working_directory: /go/src/github.com/stripe/veneur
     steps:
-    - install
     - checkout
     - test
 
@@ -116,16 +145,15 @@ jobs:
       name: previous
     working_directory: /go/src/github.com/stripe/veneur
     steps:
-      - install
       - checkout
       - test
 
   test_tip:
-    executor:
-      name: tip
+    docker:
+      - image: golang:latest
     working_directory: /go/src/github.com/stripe/veneur
     steps:
-      - install
+      - fetch_and_build_latest_go
       - checkout
       - test
 
@@ -133,13 +161,13 @@ workflows:
   version: 2
   continuous_integration:
     jobs:
-      - gofmt
+      - code_hygiene
       - test_stable
       - test_previous
       - test_tip
       - success:
           requires:
-          - gofmt
+          - code_hygiene
           - test_stable
           - test_previous
           - test_tip
