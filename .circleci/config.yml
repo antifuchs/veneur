@@ -1,5 +1,8 @@
 version: 2.1
 executors:
+  "gofmt":
+    docker:
+      - image: golang:1.11
   "previous":
     docker:
       - image: golang:1.11
@@ -14,9 +17,6 @@ commands:
   install:
     description: "Install prerequisites"
     parameters:
-      gofmt_version:
-        type: string
-        default: "1.11"
       protoc_version:
         type: string
         default: "3.1.0"
@@ -28,7 +28,7 @@ commands:
         default: "25101aadb97aa42907eee6a238d6d26a6cb3c756"
     steps:
       - restore_cache:
-          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
+          key: "protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
       - run:
           name: protoc
           command: |
@@ -38,14 +38,6 @@ commands:
               mkdir /opt/protoc
               wget -O/tmp/protoc.zip https://github.com/google/protobuf/releases/download/v<<parameters.protoc_version>>/protoc-<<parameters.protoc_version>>-linux-x86_64.zip
               unzip /tmp/protoc.zip -d /opt/protoc
-            fi
-      - run:
-          name: gofmt
-          command: |
-            if ! [ -d /opt/gofmt ] ; then
-              mkdir /opt/gofmt
-              wget -O/tmp/go.tgz https://storage.googleapis.com/golang/go<<parameters.gofmt_version>>.linux-amd64.tar.gz
-              tar -C /opt/gofmt -xvf /tmp/go.tgz go/bin/gofmt
             fi
       - run:
           name: protoc-gen-gogofaster
@@ -79,25 +71,75 @@ commands:
               go install
             fi
       - save_cache:
-          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
+          key: "protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
           paths:
             - /opt/protoc
-            - /opt/gofmt
             - /go/bin/protoc-gen-gogofaster
             - /go/bin/dep
             - /go/bin/stringer
-
-
+  test:
+    description: "Run the tests"
+    steps:
+      - run:
+          name: go test
+          command: go test -race -v -timeout 60s ./...
 
 jobs:
-  build:
+  success:
     docker:
-      # specify the version
-      - image: golang:1.11
+      - image: alpine:latest
+    steps:
+      - run: echo yay
 
+  gofmt:
+    executor:
+      name: gofmt
+    working_directory: /go/src/github.com/stripe/veneur
+    steps:
+      - checkout
+      - run:
+          name: "gofmt"
+          command: |
+            gofmt -d .
+
+  test_stable:
+    executor:
+      name: stable
+    working_directory: /go/src/github.com/stripe/veneur
+    steps:
+    - install
+    - checkout
+    - test
+
+  test_previous:
+    executor:
+      name: previous
     working_directory: /go/src/github.com/stripe/veneur
     steps:
       - install
       - checkout
+      - test
 
-      - run: go test -race -v -timeout 60s ./...
+  test_tip:
+    executor:
+      name: tip
+    working_directory: /go/src/github.com/stripe/veneur
+    steps:
+      - install
+      - checkout
+      - test
+
+workflows:
+  version: 2
+  continuous_integration:
+    jobs:
+      - gofmt
+      - test_stable
+      - test_previous
+      - test_tip
+      - success:
+          requires:
+          - gofmt
+          - test_stable
+          - test_previous
+          - test_tip
