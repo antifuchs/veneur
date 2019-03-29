@@ -26,9 +26,12 @@ commands:
       stringer_rev:
         type: string
         default: "25101aadb97aa42907eee6a238d6d26a6cb3c756"
+      cachebust:
+        type: string
+        default: "1"
     steps:
       - restore_cache:
-          key: "protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
+          key: "protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>_<<parameters.cachebust>>"
       - run:
           name: protoc
           command: |
@@ -71,10 +74,11 @@ commands:
               go install
             fi
       - save_cache:
-          key: "protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
+          key: "protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>_<<parameters.cachebust>>"
           paths:
             - /opt/protoc
             - /go/bin/protoc-gen-gogofaster
+            - /go/src/github.com/gogo/protobuf
             - /go/bin/dep
             - /go/bin/stringer
   fetch_and_build_latest_go:
