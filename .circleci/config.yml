@@ -28,9 +28,13 @@ commands:
         default: "25101aadb97aa42907eee6a238d6d26a6cb3c756"
     steps:
       - run:
+          name: apt
+          command: |
+            apt-get -q update
+            apt-get install -yq unzip
+      - run:
           name: protoc
           command: |
-            apt-get install -yq unzip
             mkdir /tmp/protoc
             wget -O/tmp/protoc.zip https://github.com/google/protobuf/releases/download/v<<parameters.protoc_version>>/protoc-<<parameters.protoc_version>>-linux-x86_64.zip
             unzip /tmp/protoc.zip -d /tmp/protoc
