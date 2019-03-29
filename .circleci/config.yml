@@ -87,7 +87,7 @@ commands:
           command: |
             mv /usr/local/go /usr/local/go-stable
             wget -O/tmp/go-master.tgz https://github.com/golang/go/archive/master.tar.gz
-            tar -C /tmp xzvf /tmp/go-master.tgz
+            tar -C /tmp -zxvf /tmp/go-master.tgz
             mv /tmp/go-master /usr/local/go
             export GOSRC=/usr/local/go
             export GOROOT=$GOSRC
@@ -117,7 +117,11 @@ jobs:
     steps:
       - install
       - checkout
-      - run: go generate
+      - run:
+          name: go generate
+          command: |
+            export PATH=$PATH:/opt/protoc/bin
+            go generate
       - run: "dep check"
       - run:
           name: "gofmt"
