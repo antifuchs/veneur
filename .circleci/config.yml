@@ -27,46 +27,65 @@ commands:
         type: string
         default: "25101aadb97aa42907eee6a238d6d26a6cb3c756"
     steps:
-      - run:
-          name: apt
-          command: |
-            apt-get -q update
-            apt-get install -yq unzip
+      - restore_cache:
+          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc-gen-gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
       - run:
           name: protoc
           command: |
-            mkdir /opt/protoc
-            wget -O/tmp/protoc.zip https://github.com/google/protobuf/releases/download/v<<parameters.protoc_version>>/protoc-<<parameters.protoc_version>>-linux-x86_64.zip
-            unzip /tmp/protoc.zip -d /opt/protoc
+            if ! [ -d /opt/protoc ]; then
+              apt-get -q update
+              apt-get install -yq unzip
+              mkdir /opt/protoc
+              wget -O/tmp/protoc.zip https://github.com/google/protobuf/releases/download/v<<parameters.protoc_version>>/protoc-<<parameters.protoc_version>>-linux-x86_64.zip
+              unzip /tmp/protoc.zip -d /opt/protoc
+            fi
       - run:
           name: gofmt
           command: |
-            mkdir /opt/gofmt
-            wget -O/tmp/go.tgz https://storage.googleapis.com/golang/go<<parameters.gofmt_version>>.linux-amd64.tar.gz
-            tar -C /opt/gofmt -xvf /tmp/go.tgz go/bin/gofmt
+            if ! [ -d /opt/gofmt ] ; then
+              mkdir /opt/gofmt
+              wget -O/tmp/go.tgz https://storage.googleapis.com/golang/go<<parameters.gofmt_version>>.linux-amd64.tar.gz
+              tar -C /opt/gofmt -xvf /tmp/go.tgz go/bin/gofmt
+            fi
       - run:
           name: protoc-gen-gogofaster
           command: |
-            go get -d -v github.com/gogo/protobuf/protoc-gen-gogofaster
-            cd $GOPATH/src/github.com/gogo/protobuf
-            git fetch
-            git reset --hard v0.5
-            go install github.com/gogo/protobuf/protoc-gen-gogofaster
+            if ! [ -x $GOPATH/bin/protoc-gen-gogofaster ] ; then
+              go get -d -v github.com/gogo/protobuf/protoc-gen-gogofaster
+              cd $GOPATH/src/github.com/gogo/protobuf
+              git fetch
+              git reset --hard v0.5
+              go install github.com/gogo/protobuf/protoc-gen-gogofaster
+            fi
       - run:
           name: gojson
           command: |
-            go get -u github.com/ChimeraCoder/gojson/gojson
+            if ! [ -x $GOPATH/bin/gojson ] ; then
+              go get -u github.com/ChimeraCoder/gojson/gojson
+            fi
       - run:
           name: dep
           command: |
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            if ! [ -x $GOPATH/bin/dep ] ; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+            fi
       - run:
           name: stringer
           command: |
-            go get -u -u golang.org/x/tools/cmd/stringer
-            cd $GOPATH/src/golang.org/x/tools/cmd/stringer
-            git reset --hard <<parameters.stringer_rev>>
-            go install
+            if ! [ -x $GOPATH/bin/stringer ] ; then
+              go get -u -u golang.org/x/tools/cmd/stringer
+              cd $GOPATH/src/golang.org/x/tools/cmd/stringer
+              git reset --hard <<parameters.stringer_rev>>
+              go install
+            fi
+      - save_cache:
+          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc-gen-gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
+          paths:
+            - /opt/protoc
+            - /opt/gofmt
+            - /go/bin/protoc-gen-gogofaster
+            - /go/bin/dep
+            - /go/bin/stringer
 
 
 
