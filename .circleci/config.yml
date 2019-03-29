@@ -91,6 +91,9 @@ commands:
       - run:
           name: get latest master
           command: |
+            if [ "$(cat /tmp/go-version)" = "$(cat /usr/local/go/VERSION)" ] ; then
+              exit 0
+            fi
             mv /usr/local/go /usr/local/go-stable
             wget -O/tmp/go-master.tgz https://github.com/golang/go/archive/master.tar.gz
             tar -C /tmp -zxf /tmp/go-master.tgz
