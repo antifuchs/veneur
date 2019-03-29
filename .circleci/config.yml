@@ -44,7 +44,6 @@ commands:
             mkdir /opt/gofmt
             wget -O/tmp/go.tgz https://storage.googleapis.com/golang/go<<parameters.gofmt_version>>.linux-amd64.tar.gz
             tar -C /opt/gofmt -xvf /tmp/go.tgz go/bin/gofmt
-            sudo mv /tmp/gofmt/go/bin/gofmt /usr/bin/gofmt
       - run:
           name: protoc-gen-gogofaster
           command: |
