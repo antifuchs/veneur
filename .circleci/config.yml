@@ -30,6 +30,7 @@ commands:
       - run:
           name: protoc
           command: |
+            apt-get install -yq unzip
             mkdir /tmp/protoc
             wget -O/tmp/protoc.zip https://github.com/google/protobuf/releases/download/v<<parameters.protoc_version>>/protoc-<<parameters.protoc_version>>-linux-x86_64.zip
             unzip /tmp/protoc.zip -d /tmp/protoc
