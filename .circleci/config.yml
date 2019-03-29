@@ -85,6 +85,12 @@ commands:
           name: create datestamp
           command: |
             echo go-master-$(date +%Y-%m-%d) | tee /tmp/go-version
+      - run:
+          name: "Move away stable go"
+          command: |
+            if ! [ -d /usr/local/go-stable ] ; then
+              mv /usr/local/go /usr/local/go-stable
+            fi
       - restore_cache:
           key: |
             {{ checksum "/tmp/go-version" }}
@@ -94,7 +100,6 @@ commands:
             if [ "$(cat /tmp/go-version)" = "$(cat /usr/local/go/VERSION)" ] ; then
               exit 0
             fi
-            mv /usr/local/go /usr/local/go-stable
             wget -O/tmp/go-master.tgz https://github.com/golang/go/archive/master.tar.gz
             tar -C /tmp -zxf /tmp/go-master.tgz
             mv /tmp/go-master /usr/local/go
