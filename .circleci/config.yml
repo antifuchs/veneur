@@ -84,14 +84,13 @@ commands:
   fetch_and_build_latest_go:
     description: "Builds the latest version of go from source"
     steps:
-      - run: apt-get update -qy
-      - run: apt-get install -qy --no-install-recommends g++ gcc libc6-dev make
       - run:
           name: create datestamp
           command: |
-            echo go-master-$(date +%Y-%M-%d) > /tmp/go-version
+            echo go-master-$(date +%Y-%M-%d) | tee /tmp/go-version
       - restore_cache:
-          key: '{{ checksum "/tmp/go-version" }}'
+          key: |
+            {{ checksum "/tmp/go-version" }}
       - run:
           name: get latest master
           command: |
@@ -103,11 +102,12 @@ commands:
             export GOROOT=$GOSRC
             export GOROOT_BOOTSTRAP=/usr/local/go-stable
             export GOBUILD=$GOSRC/src
-            echo go-master-$(date +%Y-%M-%d) > $GOROOT/VERSION
+            cp /tmp/go-version $GOROOT/VERSION
             cd $GOBUILD
             ./make.bash
       - save_cache:
-          key: '{{ checksum "/tmp/go-version" }}'
+          key: |
+            {{ checksum "/tmp/go-version" }}
           paths:
             - /usr/local/go
   test:
