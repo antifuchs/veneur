@@ -191,3 +191,14 @@ workflows:
           - test_stable
           - test_previous
           - test_tip
+  scheduled_tests:
+    jobs:
+      - test_stable
+      - test_previous
+      - test_tip
+    triggers:
+      - schedule:
+          cron: 0 0 * * 0
+          filters:
+            branches:
+              only: ["master"]
