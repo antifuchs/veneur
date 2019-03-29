@@ -1,0 +1,82 @@
+version: 2.1
+executors:
+  "previous":
+    docker:
+      - image: golang:1.11
+  "stable":
+    docker:
+      - image: golang:1.12
+  "tip":
+    docker:
+      - image: golang:tip
+
+commands:
+  install:
+    description: "Install prerequisites"
+    parameters:
+      gofmt_version:
+        type: string
+        default: "1.11"
+      protoc_version:
+        type: string
+        default: "3.1.0"
+      protoc_gen_gogofaster_tag:
+        type: string
+        default: "v0.5"
+      stringer_rev:
+        type: string
+        default: "25101aadb97aa42907eee6a238d6d26a6cb3c756"
+    steps:
+      - run:
+          name: protoc
+          command: |
+            mkdir /tmp/protoc
+            wget -O/tmp/protoc.zip https://github.com/google/protobuf/releases/download/v<<parameters.protoc_version>>/protoc-<<parameters.protoc_version>>-linux-x86_64.zip
+            unzip /tmp/protoc.zip -d /tmp/protoc
+            sudo cp /tmp/protoc/bin/protoc /usr/bin/protoc
+            sudo chmod a+x /usr/bin/protoc
+      - run:
+          name: gofmt
+          command: |
+            mkdir /tmp/gofmt
+            wget -O/tmp/go.tgz https://storage.googleapis.com/golang/go<<parameters.gofmt_version>>.linux-amd64.tar.gz
+            tar -C /tmp/gofmt -xvf /tmp/go.tgz  go/bin/gofmt
+            sudo mv /tmp/gofmt/go/bin/gofmt /usr/bin/gofmt
+      - run:
+          name: protoc-gen-gogofaster
+          command: |
+            go get -d -v github.com/gogo/protobuf/protoc-gen-gogofaster
+            cd $GOPATH/src/github.com/gogo/protobuf
+            git fetch
+            git reset --hard v0.5
+            go install github.com/gogo/protobuf/protoc-gen-gogofaster
+      - run:
+          name: gojson
+          command: |
+            go get -u github.com/ChimeraCoder/gojson/gojson
+      - run:
+          name: dep
+          command: |
+            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+      - run:
+          name: stringer
+          command: |
+            go get -u -u golang.org/x/tools/cmd/stringer
+            cd $GOPATH/src/golang.org/x/tools/cmd/stringer
+            git reset --hard <<parameters.stringer_rev>>
+            go install
+
+
+
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: golang:1.11
+
+    working_directory: /go/src/github.com/stripe/veneur
+    steps:
+      - install
+      - checkout
+
+      - run: go test -race -v -timeout 60s ./...
