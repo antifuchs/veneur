@@ -35,17 +35,15 @@ commands:
       - run:
           name: protoc
           command: |
-            mkdir /tmp/protoc
+            mkdir /opt/protoc
             wget -O/tmp/protoc.zip https://github.com/google/protobuf/releases/download/v<<parameters.protoc_version>>/protoc-<<parameters.protoc_version>>-linux-x86_64.zip
-            unzip /tmp/protoc.zip -d /tmp/protoc
-            sudo cp /tmp/protoc/bin/protoc /usr/bin/protoc
-            sudo chmod a+x /usr/bin/protoc
+            unzip /tmp/protoc.zip -d /opt/protoc
       - run:
           name: gofmt
           command: |
-            mkdir /tmp/gofmt
+            mkdir /opt/gofmt
             wget -O/tmp/go.tgz https://storage.googleapis.com/golang/go<<parameters.gofmt_version>>.linux-amd64.tar.gz
-            tar -C /tmp/gofmt -xvf /tmp/go.tgz  go/bin/gofmt
+            tar -C /opt/gofmt -xvf /tmp/go.tgz go/bin/gofmt
             sudo mv /tmp/gofmt/go/bin/gofmt /usr/bin/gofmt
       - run:
           name: protoc-gen-gogofaster
