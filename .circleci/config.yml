@@ -87,7 +87,7 @@ commands:
       - run:
           name: create datestamp
           command: |
-            echo go-master-$(date +%Y-%M-%d) | tee /tmp/go-version
+            echo go-master-$(date +%Y-%m-%d) | tee /tmp/go-version
       - restore_cache:
           key: |
             {{ checksum "/tmp/go-version" }}
