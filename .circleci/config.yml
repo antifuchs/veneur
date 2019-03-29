@@ -28,7 +28,7 @@ commands:
         default: "25101aadb97aa42907eee6a238d6d26a6cb3c756"
     steps:
       - restore_cache:
-          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc-gen-gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
+          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
       - run:
           name: protoc
           command: |
@@ -79,7 +79,7 @@ commands:
               go install
             fi
       - save_cache:
-          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc-gen-gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
+          key: "gofmt-<<parameters.gofmt_version>>_protoc-<<parameters.protoc_version>>_gogofaster-<<parameters.protoc_gen_gogofaster_tag>>_stringer-<<parameters.stringer_rev>>"
           paths:
             - /opt/protoc
             - /opt/gofmt
