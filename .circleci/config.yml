@@ -132,12 +132,12 @@ jobs:
           command: |
             mv vendor /tmp/veneur-vendor
             gofmt -w .
-            mv /tmp/veneur-vendor ./
+            mv /tmp/veneur-vendor ./vendor
       - run:
           name: "check if any files changed"
           command: |
             git add .
-            git diff --cached
+            env PAGER=cat git diff --cached
             git diff-index --cached --exit-code HEAD
 
   test_stable:
