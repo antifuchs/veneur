@@ -87,11 +87,17 @@ commands:
       - run: apt-get update -qy
       - run: apt-get install -qy --no-install-recommends g++ gcc libc6-dev make
       - run:
+          name: create datestamp
+          command: |
+            echo go-master-$(date +%Y-%M-%d) > /tmp/go-version
+      - restore_cache:
+          key: '{{ checksum "/tmp/go-version" }}'
+      - run:
           name: get latest master
           command: |
             mv /usr/local/go /usr/local/go-stable
             wget -O/tmp/go-master.tgz https://github.com/golang/go/archive/master.tar.gz
-            tar -C /tmp -zxvf /tmp/go-master.tgz
+            tar -C /tmp -zxf /tmp/go-master.tgz
             mv /tmp/go-master /usr/local/go
             export GOSRC=/usr/local/go
             export GOROOT=$GOSRC
@@ -100,6 +106,10 @@ commands:
             echo go-master-$(date +%Y-%M-%d) > $GOROOT/VERSION
             cd $GOBUILD
             ./make.bash
+      - save_cache:
+          key: '{{ checksum "/tmp/go-version" }}'
+          paths:
+            - /usr/local/go
   test:
     description: "Run the tests"
     steps:
